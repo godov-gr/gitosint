@@ -1,5 +1,6 @@
 import requests
 import re
+import json
 
 def get_user_info(username):
     url = f"https://api.github.com/users/{username}"
@@ -58,36 +59,51 @@ def get_starred_repos(username):
         return [f"{repo['full_name']} ({repo['stargazers_count']} stars)" for repo in sorted_repos]
     return []
 
+def print_section(title, content):
+    print("\n" + "=" * 50)
+    print(f"{title}")
+    print("=" * 50)
+    print(content if content else "[Нет данных]")
+
+def save_report(username, data):
+    filename = f"{username}_report.json"
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+    print(f"[+] Отчёт сохранён в {filename}")
+
 def main():
     usernames = input("Введите один или несколько GitHub-никнеймов через запятую: ")
     usernames = [u.strip() for u in usernames.split(",") if u.strip()]
     
     for username in usernames:
-        print(f"\n[+] Получаем информацию о пользователе {username}...")
+        report_data = {}
+        
+        print_section(f"Информация о пользователе {username}", "")
         user_info = get_user_info(username)
         if user_info:
             for key, value in user_info.items():
                 print(f"{key}: {value}")
+            report_data["User Info"] = user_info
         
-        print(f"\n[+] Ищем email-адреса в публичных событиях для {username}...")
+        print_section(f"Email-адреса из событий {username}", "")
         emails = get_emails_from_events(username)
-        if emails:
-            for email in emails:
-                print(f"[+] Найден email: {email}")
+        print("\n".join(emails) if emails else "[-] Email-адреса не найдены.")
+        report_data["Emails"] = list(emails)
+        
+        print_section(f"Подписчики {username}", ", ".join(get_followers(username)))
+        report_data["Followers"] = get_followers(username)
+        
+        print_section(f"Подписки {username}", ", ".join(get_following(username)))
+        report_data["Following"] = get_following(username)
+        
+        print_section(f"Избранные репозитории {username}", "\n".join(get_starred_repos(username)))
+        report_data["Starred Repos"] = get_starred_repos(username)
+        
+        download = input("\nDownload report (y/n)? ").strip().lower()
+        if download == "y":
+            save_report(username, report_data)
         else:
-            print("[-] Email-адреса не найдены.")
-        
-        print(f"\n[+] Анализ подписчиков {username}...")
-        followers = get_followers(username)
-        print(f"Подписчики ({len(followers)}): {', '.join(followers) if followers else 'Нет данных'}")
-        
-        print(f"\n[+] Анализ подписок {username}...")
-        following = get_following(username)
-        print(f"Подписки ({len(following)}): {', '.join(following) if following else 'Нет данных'}")
-        
-        print(f"\n[+] Анализ избранных репозиториев {username}...")
-        starred_repos = get_starred_repos(username)
-        print(f"Избранные репозитории ({len(starred_repos)}):\n" + "\n".join(starred_repos) if starred_repos else "Нет данных")
+            print("[-] Отчёт не был сохранён.")
 
 if __name__ == "__main__":
     main()
