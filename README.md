@@ -1,1 +1,1 @@
-"# OSINT instrument for github" 
+# OSINT instrument for github
