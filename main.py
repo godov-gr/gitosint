@@ -40,14 +40,14 @@ def get_followers(username):
     url = f"https://api.github.com/users/{username}/followers"
     response = requests.get(url)
     if response.status_code == 200:
-        return [user["login"] for user in response.json()]
+        return [f"[{user['login']}](https://github.com/{user['login']})" for user in response.json()]
     return []
 
 def get_following(username):
     url = f"https://api.github.com/users/{username}/following"
     response = requests.get(url)
     if response.status_code == 200:
-        return [user["login"] for user in response.json()]
+        return [f"[{user['login']}](https://github.com/{user['login']})" for user in response.json()]
     return []
 
 def get_starred_repos(username):
@@ -59,11 +59,11 @@ def get_starred_repos(username):
         return [f"{repo['full_name']} ({repo['stargazers_count']} stars)" for repo in sorted_repos]
     return []
 
-def print_section(title, content):
+def print_section(title, content, no_data_msg="[Нет данных]"):
     print("\n" + "=" * 50)
     print(f"{title}")
     print("=" * 50)
-    print(content if content else "[Нет данных]")
+    print(content if content else no_data_msg)
 
 def save_report(username, data):
     filename = f"{username}_report.json"
@@ -85,19 +85,20 @@ def main():
                 print(f"{key}: {value}")
             report_data["User Info"] = user_info
         
-        print_section(f"Email-адреса из событий {username}", "")
-        emails = get_emails_from_events(username)
-        print("\n".join(emails) if emails else "[-] Email-адреса не найдены.")
-        report_data["Emails"] = list(emails)
+        print_section(f"Email-адреса из событий {username}", "\n".join(get_emails_from_events(username)), "[-] Email-адреса не найдены.")
+        report_data["Emails"] = list(get_emails_from_events(username))
         
-        print_section(f"Подписчики {username}", ", ".join(get_followers(username)))
-        report_data["Followers"] = get_followers(username)
+        followers = get_followers(username)
+        print_section(f"Подписчики {username}", "\n".join(followers), "[-] Подписчики отсутствуют.")
+        report_data["Followers"] = followers
         
-        print_section(f"Подписки {username}", ", ".join(get_following(username)))
-        report_data["Following"] = get_following(username)
+        following = get_following(username)
+        print_section(f"Подписки {username}", "\n".join(following), "[-] Подписок нет.")
+        report_data["Following"] = following
         
-        print_section(f"Избранные репозитории {username}", "\n".join(get_starred_repos(username)))
-        report_data["Starred Repos"] = get_starred_repos(username)
+        starred_repos = get_starred_repos(username)
+        print_section(f"Избранные репозитории {username}", "\n".join(starred_repos), "[-] Нет избранных репозиториев.")
+        report_data["Starred Repos"] = starred_repos
         
         download = input("\nDownload report (y/n)? ").strip().lower()
         if download == "y":
