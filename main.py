@@ -40,14 +40,14 @@ def get_followers(username):
     url = f"https://api.github.com/users/{username}/followers"
     response = requests.get(url)
     if response.status_code == 200:
-        return [f"[{user['login']}](https://github.com/{user['login']})" for user in response.json()]
+        return [f"{user['login']}:    https://github.com/{user['login']}" for user in response.json()]
     return []
 
 def get_following(username):
     url = f"https://api.github.com/users/{username}/following"
     response = requests.get(url)
     if response.status_code == 200:
-        return [f"[{user['login']}](https://github.com/{user['login']})" for user in response.json()]
+        return [f"{user['login']}:    https://github.com/{user['login']}" for user in response.json()]
     return []
 
 def get_starred_repos(username):
