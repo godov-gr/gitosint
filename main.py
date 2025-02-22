@@ -35,6 +35,29 @@ def get_emails_from_events(username):
                         emails.add(email)
     return emails
 
+def get_followers(username):
+    url = f"https://api.github.com/users/{username}/followers"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return [user["login"] for user in response.json()]
+    return []
+
+def get_following(username):
+    url = f"https://api.github.com/users/{username}/following"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return [user["login"] for user in response.json()]
+    return []
+
+def get_starred_repos(username):
+    url = f"https://api.github.com/users/{username}/starred"
+    response = requests.get(url)
+    if response.status_code == 200:
+        repos = response.json()
+        sorted_repos = sorted(repos, key=lambda x: x["stargazers_count"], reverse=True)
+        return [f"{repo['full_name']} ({repo['stargazers_count']} stars)" for repo in sorted_repos]
+    return []
+
 def main():
     usernames = input("Введите один или несколько GitHub-никнеймов через запятую: ")
     usernames = [u.strip() for u in usernames.split(",") if u.strip()]
@@ -53,6 +76,18 @@ def main():
                 print(f"[+] Найден email: {email}")
         else:
             print("[-] Email-адреса не найдены.")
+        
+        print(f"\n[+] Анализ подписчиков {username}...")
+        followers = get_followers(username)
+        print(f"Подписчики ({len(followers)}): {', '.join(followers) if followers else 'Нет данных'}")
+        
+        print(f"\n[+] Анализ подписок {username}...")
+        following = get_following(username)
+        print(f"Подписки ({len(following)}): {', '.join(following) if following else 'Нет данных'}")
+        
+        print(f"\n[+] Анализ избранных репозиториев {username}...")
+        starred_repos = get_starred_repos(username)
+        print(f"Избранные репозитории ({len(starred_repos)}):\n" + "\n".join(starred_repos) if starred_repos else "Нет данных")
 
 if __name__ == "__main__":
     main()
